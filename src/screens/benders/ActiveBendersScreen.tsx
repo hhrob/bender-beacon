@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,21 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../../contexts/AuthContext';
 import { getBendersForUser } from '../../services/bender.service';
-import { Bender } from '../../types';
+import { Bender, BendersStackParamList, MainTabParamList } from '../../types';
+
+type NavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<BendersStackParamList>,
+  BottomTabNavigationProp<MainTabParamList>
+>;
 
 const ActiveBendersScreen: React.FC = () => {
   const { user } = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   // STATE: Track the benders and loading states
   const [benders, setBenders] = useState<Bender[]>([]);
@@ -41,14 +48,11 @@ const ActiveBendersScreen: React.FC = () => {
     }
   };
 
-  // useFocusEffect: Reload benders every time this screen comes into focus
-  // This is better than useEffect because it runs when you navigate back to this screen
-  useFocusEffect(
-    useCallback(() => {
-      setLoading(true);
-      loadBenders();
-    }, [user])
-  );
+  // useEffect: Load benders once on mount, then cache until manual refresh
+  useEffect(() => {
+    setLoading(true);
+    loadBenders();
+  }, []);
 
   // HANDLE REFRESH: Pull down to refresh
   const handleRefresh = () => {
@@ -58,7 +62,7 @@ const ActiveBendersScreen: React.FC = () => {
 
   // HANDLE BENDER PRESS: Navigate to bender detail screen
   const handleBenderPress = (benderId: string) => {
-    navigation.navigate('BenderDetail' as never, { benderId } as never);
+    navigation.navigate('BenderDetail', { benderId });
   };
 
   // RENDER BENDER CARD: Each item in the list
@@ -138,7 +142,7 @@ const ActiveBendersScreen: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={styles.createButton}
-          onPress={() => navigation.navigate('CreateBender' as never)}
+          onPress={() => navigation.navigate('CreateBender')}
         >
           <Text style={styles.createButtonText}>Create Your First Bender</Text>
         </TouchableOpacity>

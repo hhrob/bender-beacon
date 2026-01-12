@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getFriends,
@@ -21,11 +22,13 @@ import {
   blockUser,
   getFriendSuggestions,
 } from '../../services/friends.service';
-import { User, FriendRequest } from '../../types';
+import { User, FriendRequest, FriendsStackParamList } from '../../types';
+
+type NavigationProp = NativeStackNavigationProp<FriendsStackParamList>;
 
 const FriendsListScreen: React.FC = () => {
   const { user, refreshUserData } = useAuth();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
 
   // STATE
   const [friends, setFriends] = useState<User[]>([]);
@@ -56,11 +59,9 @@ const FriendsListScreen: React.FC = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [user])
-  );
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -91,7 +92,7 @@ const FriendsListScreen: React.FC = () => {
 
   // FRIEND ACTIONS
   const handleFriendPress = (friend: User) => {
-    navigation.navigate('FriendProfile' as never, { userId: friend.uid } as never);
+    navigation.navigate('FriendProfile', { userId: friend.uid });
   };
 
   const handleRemoveFriend = (friend: User) => {

@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, getFirestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
@@ -22,11 +22,10 @@ export const auth = getAuth(app);
 // Initialize Firestore with offline persistence DISABLED for React Native
 // This fixes the "client is offline" error
 // Only initialize if not already initialized
-let db;
+let db: Firestore;
 try {
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
-    useFetchStreams: false,
   });
 } catch (error) {
   // If already initialized, just get the existing instance
