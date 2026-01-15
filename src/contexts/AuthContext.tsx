@@ -33,8 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserData = async () => {
     if (user) {
-      const data = await getUserData(user.uid);
-      setUserData(data);
+      try {
+        const data = await getUserData(user.uid);
+        setUserData(data);
+      } catch (error) {
+        console.error('Error refreshing user data:', error);
+      }
     }
   };
 
@@ -43,14 +47,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(firebaseUser);
 
       if (firebaseUser) {
-        // Fetch user data from Firestore
-        const data = await getUserData(firebaseUser.uid);
-        setUserData(data);
+        // Fetch user data from Firestore with retry logic
+        // Keep loading true until userData is fetched
+        const fetchWithRetry = async (attempts = 3, delay = 1000) => {
+          for (let i = 0; i < attempts; i++) {
+            try {
+              console.log(`[AuthContext] Attempt ${i + 1}/${attempts} to fetch user data`);
+              const data = await getUserData(firebaseUser.uid);
+              setUserData(data);
+              console.log('[AuthContext] Successfully fetched user data');
+              setLoading(false); // Only set loading false after successful fetch
+              return;
+            } catch (error: any) {
+              console.error(`[AuthContext] Attempt ${i + 1} failed:`, error.message);
+              if (i < attempts - 1) {
+                console.log(`[AuthContext] Waiting ${delay}ms before retry...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2; // Exponential backoff
+              }
+            }
+          }
+          console.error('[AuthContext] All attempts failed, setting userData to null');
+          setUserData(null);
+          setLoading(false); // Set loading false after all retries fail
+        };
+
+        await fetchWithRetry();
       } else {
         setUserData(null);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return unsubscribe;

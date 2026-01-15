@@ -1,7 +1,8 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore';
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
+import { initializeFirestore, getFirestore, Firestore, enableNetwork } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -16,23 +17,41 @@ const firebaseConfig = {
 // Initialize Firebase only if it hasn't been initialized yet
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize Firebase services
-export const auth = getAuth(app);
+// Initialize Auth with AsyncStorage persistence for React Native
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage)
+  });
+} catch (error) {
+  // If already initialized, get existing instance
+  console.log('Auth already initialized, using existing instance');
+  auth = getAuth(app);
+}
 
-// Initialize Firestore with offline persistence DISABLED for React Native
-// This fixes the "client is offline" error
-// Only initialize if not already initialized
+// Initialize Firestore for React Native
 let db: Firestore;
 try {
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
   });
+
+  // Explicitly enable network to ensure Firestore connects
+  enableNetwork(db).catch(err => {
+    console.log('Network already enabled or error enabling:', err);
+  });
 } catch (error) {
   // If already initialized, just get the existing instance
+  console.log('Firestore already initialized, using existing instance');
   db = getFirestore(app);
+
+  // Still try to enable network on existing instance
+  enableNetwork(db).catch(err => {
+    console.log('Network already enabled or error enabling:', err);
+  });
 }
 
-export { db };
+export { auth, db };
 export const storage = getStorage(app);
 
 export default app;

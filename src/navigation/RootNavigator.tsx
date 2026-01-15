@@ -6,7 +6,7 @@ import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 
 const RootNavigator: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
 
   if (loading) {
     return (
@@ -16,9 +16,13 @@ const RootNavigator: React.FC = () => {
     );
   }
 
+  // Show auth screens if no user OR if user exists but userData is missing
+  // (This handles cases where Firebase Auth has a user but Firestore document is missing)
+  const shouldShowAuth = !user || (user && !userData);
+
   return (
     <NavigationContainer>
-      {user ? <MainNavigator /> : <AuthNavigator />}
+      {shouldShowAuth ? <AuthNavigator /> : <MainNavigator />}
     </NavigationContainer>
   );
 };

@@ -82,7 +82,7 @@ const AddFriendScreen: React.FC = () => {
             value={searchTerm}
             onChangeText={setSearchTerm}
             autoCapitalize="none"
-            editable={!loading}
+            editable={true}
           />
           <TouchableOpacity
             style={[styles.searchButton, loading && styles.buttonDisabled]}
@@ -143,11 +143,18 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderWidth: 0,
+    borderRadius: 12,
+    padding: 15,
     fontSize: 16,
+    backgroundColor: '#f5f5f5',
+    color: '#000',
+    fontWeight: '500',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   searchButton: {
     backgroundColor: '#007AFF',
